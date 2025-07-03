@@ -9,9 +9,19 @@ import SwiftUI
 
 @main
 struct iListenProApp: App {
+    @StateObject var sessionVM = SessionViewModel()
+    @State var showingOnboarding = !UserDefaults.standard.bool(forKey: "didOnboard")
+    
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if showingOnboarding {
+                OnboardingView(showingOnboarding: $showingOnboarding)
+                    .environmentObject(sessionVM)
+            } else {
+                ContentView()
+                    .environmentObject(sessionVM)
+                    .onAppear { sessionVM.requestPermissionsAndScheduleReminder() }
+            }
         }
     }
 }
