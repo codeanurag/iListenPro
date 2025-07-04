@@ -4,15 +4,13 @@
 //
 //  Created by Anurag Pandit on 04/07/25.
 //
-
-
 import SwiftUI
 
 struct RecordingControlsView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
 
     var body: some View {
-        HStack(spacing: 24) {
+        HStack(spacing: 16) {
             Button(action: {
                 sessionVM.togglePause()
             }) {
@@ -20,7 +18,7 @@ struct RecordingControlsView: View {
                     .frame(width: 120)
             }
             .buttonStyle(PrimaryButtonStyle())
-
+            
             Button(action: {
                 sessionVM.stopSession()
             }) {
@@ -29,7 +27,8 @@ struct RecordingControlsView: View {
             }
             .buttonStyle(PrimaryButtonStyle())
         }
-        .padding(.top, 40)
+        .padding(.top, 20)
     }
 }
+
 

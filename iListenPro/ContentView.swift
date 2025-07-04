@@ -14,34 +14,31 @@ struct ContentView: View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            if sessionVM.isRecording {
-                VStack(spacing: 32) {
+            VStack(spacing: 32) {
+                Spacer()
+
+                Text("How was your day today?")
+                    .font(.title2)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Text(sessionVM.encouragement ?? "")
+                    .font(.subheadline)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Spacer()
+                if sessionVM.isRecording {
                     CircularCountdownView(
                         timeRemaining: sessionVM.timeRemaining,
                         duration: sessionVM.duration
                     )
                     RecordingControlsView()
                 }
-            } else {
-                VStack {
-                    Spacer()
-
-                    Text("How was your day today?")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .padding()
-
-                    Text(sessionVM.encouragement ?? "")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
-                        .multilineTextAlignment(.center)
-                        .padding(.bottom, 40)
-
-                    NavigationLink("Previous Conversations", destination: SessionListView(sessions: sessionVM.sessions))
-                        .foregroundColor(.blue)
-                        .padding(.bottom, 20)
-
+                
+                if !sessionVM.isRecording {
                     Button(action: {
                         sessionVM.startSession()
                     }) {
@@ -50,12 +47,16 @@ struct ContentView: View {
                     }
                     .buttonStyle(PrimaryButtonStyle())
                     .padding(.horizontal)
-                    .padding(.bottom, 40)
                 }
-                .padding(.horizontal)
+                
+                NavigationLink("Previous Conversations", destination: SessionListView(sessions: sessionVM.sessions))
+                    .foregroundColor(.blue)
+                    .padding(.bottom, 12)
             }
+            .padding(.bottom, 40)
         }
     }
 }
+
 
 
