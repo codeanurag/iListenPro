@@ -11,41 +11,51 @@ struct ContentView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 40) {
-                Text("How was your day today?")
-                    .font(.title2)
-                    .padding(.top, 80)
+        ZStack {
+            Color.black.ignoresSafeArea()
 
-                Button(action: sessionVM.startSession) {
-                    Text("Start Conversation")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, minHeight: 60)
+            if sessionVM.isRecording {
+                VStack(spacing: 32) {
+                    CircularCountdownView(
+                        timeRemaining: sessionVM.timeRemaining,
+                        duration: sessionVM.duration
+                    )
+                    RecordingControlsView()
                 }
-                .buttonStyle(.borderedProminent)
-                .padding(.horizontal)
+            } else {
+                VStack {
+                    Spacer()
 
-                if let encouragement = sessionVM.encouragement {
-                    Text(encouragement)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
+                    Text("How was your day today?")
+                        .font(.title2)
+                        .foregroundColor(.white)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                        .padding()
 
-                Spacer()
+                    Text(sessionVM.encouragement ?? "")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.bottom, 40)
 
-                if let current = sessionVM.currentSession {
-                    NavigationLink("View today's conversation", destination: SessionDetailView(session: current))
-                }
+                    NavigationLink("Previous Conversations", destination: SessionListView(sessions: sessionVM.sessions))
+                        .foregroundColor(.blue)
+                        .padding(.bottom, 20)
 
-                if !sessionVM.sessions.isEmpty {
-                    NavigationLink("Previous sessions", destination: SessionListView(sessions: sessionVM.sessions))
+                    Button(action: {
+                        sessionVM.startSession()
+                    }) {
+                        Text("Start Conversation")
+                            .frame(maxWidth: .infinity, minHeight: 52)
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .padding(.horizontal)
+                    .padding(.bottom, 40)
                 }
+                .padding(.horizontal)
             }
-            .overlay(sessionVM.overlayView)
-            .navigationTitle("iListen")
         }
     }
 }
+
 
