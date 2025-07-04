@@ -29,9 +29,22 @@
 		83B95C442E16895D0082E41F /* iListenProUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = iListenProUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		83B95C6F2E17BA300082E41F /* Exceptions for "iListenPro" folder in "iListenPro" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 83B95C2B2E16895C0082E41F /* iListenPro */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		83B95C2E2E16895C0082E41F /* iListenPro */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				83B95C6F2E17BA300082E41F /* Exceptions for "iListenPro" folder in "iListenPro" target */,
+			);
 			path = iListenPro;
 			sourceTree = "<group>";
 		};
@@ -393,6 +406,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iListenPro/Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -430,6 +445,8 @@
 				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = iListenPro/Info.plist;
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
