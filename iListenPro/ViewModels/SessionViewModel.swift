@@ -11,6 +11,7 @@ import Combine
 import UserNotifications
 import SwiftUI
 import AVFAudio
+import Speech
 
 class SessionViewModel: ObservableObject {
     @Published var sessions: [Session] = []
@@ -57,11 +58,11 @@ class SessionViewModel: ObservableObject {
         UNUserNotificationCenter.current().add(request)
     }
     
-    private func transcribe(url: URL) -> AnyPublisher<String, Error> {
+    /*private func transcribe(url: URL) -> AnyPublisher<String, Error> {
         Just("I had a really long day but I’m feeling better now.")
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
-    }
+    }*/
     
     private func generateAIResponse(to text: String) -> AnyPublisher<String, Error> {
         Just("It sounds like you’ve been carrying a lot. I'm really glad you shared that.")
@@ -101,5 +102,31 @@ extension SessionViewModel {
     
     func togglePause() {
         isPaused.toggle()
+    }
+}
+extension SessionViewModel {
+    private func transcribe(url: URL) -> AnyPublisher<String, Error> {
+        Future { promise in
+            let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+            let request = SFSpeechURLRecognitionRequest(url: url)
+
+            guard let recognizer = recognizer, recognizer.isAvailable else {
+                promise(.failure(NSError(domain: "SpeechRecognizerUnavailable", code: -1)))
+                return
+            }
+
+            recognizer.recognitionTask(with: request) { result, error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        promise(.failure(error))
+                    }
+                } else if let result = result, result.isFinal {
+                    DispatchQueue.main.async {
+                        promise(.success(result.bestTranscription.formattedString))
+                    }
+                }
+            }
+        }
+        .eraseToAnyPublisher()
     }
 }
