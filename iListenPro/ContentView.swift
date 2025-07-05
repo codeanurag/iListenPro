@@ -9,7 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
+    
     @State private var showRecordingUI = false
+    @State private var showControls = false
     
     var body: some View {
         ZStack {
@@ -36,19 +38,33 @@ struct ContentView: View {
                             timeRemaining: sessionVM.timeRemaining,
                             duration: sessionVM.duration
                         )
-                        RecordingControlsView()
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .animation(.easeOut(duration: 0.4), value: showRecordingUI)
+                        
+                        if showControls {
+                            RecordingControlsView()
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                                .animation(.easeOut(duration: 0.3).delay(0.4), value: showControls)
+                        }
                     }
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(.easeOut(duration: 0.4), value: showRecordingUI)
                 }
                 
                 Spacer()
                 
                 if !sessionVM.isRecording {
+                    NavigationLink("Previous Conversations", destination: SessionListView(sessions: sessionVM.sessions))
+                        .foregroundColor(.blue)
+                        .padding(.bottom, 12)
+                    
                     Button(action: {
                         sessionVM.startSession()
                         withAnimation {
                             showRecordingUI = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            withAnimation {
+                                showControls = true
+                            }
                         }
                     }) {
                         Text("Start Conversation")
@@ -57,9 +73,6 @@ struct ContentView: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .padding(.horizontal)
                 }
-                NavigationLink("Previous Conversations", destination: SessionListView(sessions: sessionVM.sessions))
-                    .foregroundColor(.blue)
-                    .padding(.bottom, 12)
             }
             .padding(.bottom, 40)
         }
@@ -67,12 +80,9 @@ struct ContentView: View {
             if !isRecording {
                 withAnimation {
                     showRecordingUI = false
+                    showControls = false
                 }
             }
         }
     }
 }
-
-
-
-
