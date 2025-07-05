@@ -14,20 +14,27 @@ struct CircularCountdownView: View {
 
     var body: some View {
         ZStack {
+            // Background ring
             Circle()
                 .stroke(Color.white.opacity(0.2), lineWidth: 10)
 
+            // Progress ring
             Circle()
-                .trim(from: 0, to: CGFloat(1 - Double(timeRemaining) / Double(duration)))
+                .trim(from: 0, to: progress)
                 .stroke(Color.blue, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.25), value: timeRemaining)
+                .animation(.easeOut(duration: 1.0), value: timeRemaining)
 
+            // Time label
             Text("\(timeRemaining) sec")
                 .font(.title)
                 .foregroundColor(.white)
         }
         .frame(width: 220, height: 220)
-        .padding(.bottom, 20)
+    }
+
+    private var progress: CGFloat {
+        CGFloat(1 - Double(timeRemaining) / Double(duration))
     }
 }
+
