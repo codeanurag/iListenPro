@@ -13,8 +13,9 @@ class SpeechSynthesizer {
 
     func speak(text: String) {
         let utterance = AVSpeechUtterance(string: text)
-        utterance.voice = AVSpeechSynthesisVoice(language: "en-US") // replace with CoreML voice if integrated
+        utterance.voice = AVSpeechSynthesisVoice(language: "en-US") // Customize as needed
         utterance.rate = 0.45
+        utterance.pitchMultiplier = 1.0
         synthesizer.speak(utterance)
     }
 }

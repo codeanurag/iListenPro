@@ -30,6 +30,12 @@ class SessionViewModel: ObservableObject {
     private let store = SessionStore()
     private var cancellables = Set<AnyCancellable>()
     
+    private var openAIAPIKey: String {
+        // In production, use environment variables or secure storage
+        // For development, you can set this in your scheme's environment variables
+        return ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+    }
+    
     init() {
         sessions = store.load()
         encouragement = "A few minutes of self-care can go a long way."
@@ -58,11 +64,12 @@ class SessionViewModel: ObservableObject {
         UNUserNotificationCenter.current().add(request)
     }
     
-    /*private func transcribe(url: URL) -> AnyPublisher<String, Error> {
+    /*
+     private func transcribe(url: URL) -> AnyPublisher<String, Error> {
         Just("I had a really long day but I’m feeling better now.")
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
-    }*/
+    }
     
     private func generateAIResponse(to text: String) -> AnyPublisher<String, Error> {
         Just("It sounds like you’ve been carrying a lot. I'm really glad you shared that.")
@@ -70,14 +77,17 @@ class SessionViewModel: ObservableObject {
             .setFailureType(to: Error.self)
             .eraseToAnyPublisher()
     }
+     */
 }
 extension SessionViewModel {
     func startSession() {
-        currentSession = Session(date: Date())
+        let session = Session(date: Date())
+        currentSession = session
         isRecording = true
         isPaused = false
         timeRemaining = duration
         
+        // Start timer
         timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
@@ -89,8 +99,54 @@ extension SessionViewModel {
                 }
             }
         
-        // Add audioRecorder.startRecording() here if needed
+        // Start recording and pipeline
+        recorder.startRecording(duration: TimeInterval(duration))
+            .flatMap { url in
+                self.transcribe(url: url)
+            }
+            .flatMap { transcript -> AnyPublisher<String, Error> in
+                self.currentSession?.transcript = transcript
+                self.overlayView = AnyView(LoadingOverlay())
+                return self.generateAIResponse(to: transcript)
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    print("Session error: \(error.localizedDescription)")
+                    self.overlayView = AnyView(EmptyView())
+                    self.isRecording = false
+                    self.timerCancellable?.cancel()
+                }
+            }, receiveValue: { reply in
+                self.currentSession?.reply = reply
+                if let session = self.currentSession {
+                    self.sessions.insert(session, at: 0)
+                    self.store.save(self.sessions)
+                    self.synthesizer.speak(text: reply) // 🔊 Speak the AI reply
+
+                    self.overlayView = AnyView(
+                        ReflectionOverlay(
+                            transcript: session.transcript ?? "",
+                            reply: reply,
+                            onDismiss: {
+                                self.overlayView = AnyView(EmptyView())
+                            }
+                        )
+                    )
+
+                }
+
+                DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                    self.overlayView = AnyView(EmptyView())
+                }
+
+                self.overlayView = AnyView(EmptyView())
+                self.isRecording = false
+                self.timerCancellable?.cancel()
+            })
+            .store(in: &cancellables)
     }
+
     
     func stopSession() {
         isRecording = false
@@ -128,5 +184,49 @@ extension SessionViewModel {
             }
         }
         .eraseToAnyPublisher()
+    }
+}
+
+extension SessionViewModel {
+    private func generateAIResponse(to text: String) -> AnyPublisher<String, Error> {
+        let prompt = """
+        The following is a short, supportive response to someone reflecting on their day. Be warm, human, and empathetic.
+        
+        Me: \(text)
+        Listener:
+        """
+        
+        let requestBody: [String: Any] = [
+            "model": "gpt-3.5-turbo",
+            "messages": [
+                ["role": "system", "content": "You are a supportive, empathetic listener. Keep replies short and kind."],
+                ["role": "user", "content": prompt]
+            ],
+            "temperature": 0.8
+        ]
+        
+        guard let url = URL(string: "https://api.openai.com/v1/chat/completions"),
+              let body = try? JSONSerialization.data(withJSONObject: requestBody) else {
+            return Fail(error: URLError(.badURL)).eraseToAnyPublisher()
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.addValue("Bearer \(openAIAPIKey)", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        
+        return URLSession.shared.dataTaskPublisher(for: request)
+            .tryMap { data, response in
+                guard let httpResponse = response as? HTTPURLResponse,
+                      httpResponse.statusCode == 200 else {
+                    throw URLError(.badServerResponse)
+                }
+                
+                let result = try JSONDecoder().decode(OpenAIChatResponse.self, from: data)
+                return result.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines) ?? "I'm here to listen anytime."
+            }
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
     }
 }
