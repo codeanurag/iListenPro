@@ -36,6 +36,10 @@ class SessionViewModel: ObservableObject {
         return ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
     }
     
+    var canEndEarly: Bool {
+        return timeRemaining < (duration - 5) // allow early end after 5 seconds
+    }
+    
     init() {
         sessions = store.load()
         encouragement = "A few minutes of self-care can go a long way."
@@ -116,9 +120,11 @@ extension SessionViewModel {
                     self.overlayView = AnyView(EmptyView())
                     self.isRecording = false
                     self.timerCancellable?.cancel()
+                        print("OpenAI pipeline error:", error)
                 }
             }, receiveValue: { reply in
                 self.currentSession?.reply = reply
+                print("AI replied:", reply)
                 if let session = self.currentSession {
                     self.sessions.insert(session, at: 0)
                     self.store.save(self.sessions)
@@ -215,11 +221,14 @@ extension SessionViewModel {
         request.addValue("Bearer \(openAIAPIKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
+        // debug
+        print("Sending to OpenAI:", String(data: body, encoding: .utf8)!)
         
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { data, response in
-                guard let httpResponse = response as? HTTPURLResponse,
-                      httpResponse.statusCode == 200 else {
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+                print("OpenAI HTTP status:", status, "; response:", String(data: data, encoding: .utf8)!)
+                guard status == 200 else {
                     throw URLError(.badServerResponse)
                 }
                 
@@ -228,5 +237,13 @@ extension SessionViewModel {
             }
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
+    }
+}
+extension SessionViewModel {
+    func endAndSendRecording() {
+        isRecording = false
+        timerCancellable?.cancel()
+
+        recorder.stopManually() // stop early
     }
 }

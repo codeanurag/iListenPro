@@ -10,25 +10,35 @@ struct RecordingControlsView: View {
     @EnvironmentObject var sessionVM: SessionViewModel
 
     var body: some View {
-        HStack(spacing: 16) {
+        VStack(spacing: 24) {
+            HStack(spacing: 16) {
+                Button(action: {
+                    sessionVM.togglePause()
+                }) {
+                    Text(sessionVM.isPaused ? "Resume" : "Pause")
+                        .frame(width: 100)
+                }
+                .buttonStyle(PrimaryButtonStyle())
+
+                Button(action: {
+                    sessionVM.stopSession()
+                }) {
+                    Text("Stop")
+                        .frame(width: 100)
+                }
+                .buttonStyle(PrimaryButtonStyle())
+            }
+
             Button(action: {
-                sessionVM.togglePause()
+                sessionVM.endAndSendRecording()
             }) {
-                Text(sessionVM.isPaused ? "Resume" : "Pause")
-                    .frame(width: 120)
+                Text("End & Send")
+                    .frame(maxWidth: .infinity, minHeight: 44)
             }
             .buttonStyle(PrimaryButtonStyle())
-            
-            Button(action: {
-                sessionVM.stopSession()
-            }) {
-                Text("Stop")
-                    .frame(width: 120)
-            }
-            .buttonStyle(PrimaryButtonStyle())
+            .padding(.top, 8)
+            .disabled(!sessionVM.canEndEarly)
+            .opacity(sessionVM.canEndEarly ? 1.0 : 0.4)
         }
-        .padding(.top, 20)
     }
 }
-
-
