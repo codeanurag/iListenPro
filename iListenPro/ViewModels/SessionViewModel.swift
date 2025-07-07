@@ -19,7 +19,7 @@ class SessionViewModel: ObservableObject {
     @Published var timeRemaining: Int = 180
     @Published var uiState: SessionUIState = .idle
     @Published var isPaused = false
-
+    private var useMockAI = true
     let duration = 180
 
     var canEndEarly: Bool {
@@ -201,17 +201,32 @@ class SessionViewModel: ObservableObject {
         request.addValue("Bearer \(openAIAPIKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
-
+        print("📤 Sending request to OpenAI")
+        print("🔐 API Key Present:", !openAIAPIKey.isEmpty)
+        print("🧠 Prompt:\n", prompt)
+        
+        if useMockAI {
+            return Just("Thanks for sharing that. You’re doing great just by reflecting today.")
+                .delay(for: .seconds(1), scheduler: DispatchQueue.main)
+                .setFailureType(to: Error.self)
+                .eraseToAnyPublisher()
+        }
         return URLSession.shared.dataTaskPublisher(for: request)
             .tryMap { data, response in
-                let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-                guard status == 200 else {
-                    throw URLError(.badServerResponse)
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                let responseText = String(data: data, encoding: .utf8) ?? "No response body"
+
+                print("🔍 OpenAI API Status Code:", statusCode)
+                print("📩 Response body:\n", responseText)
+
+                guard statusCode == 200 else {
+                    throw NSError(domain: "OpenAIError", code: statusCode, userInfo: [NSLocalizedDescriptionKey: responseText])
                 }
 
                 let result = try JSONDecoder().decode(OpenAIChatResponse.self, from: data)
                 return result.choices.first?.message.content.trimmingCharacters(in: .whitespacesAndNewlines) ?? "I'm here to listen anytime."
             }
+
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
