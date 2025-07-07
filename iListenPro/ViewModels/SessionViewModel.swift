@@ -18,6 +18,7 @@ class SessionViewModel: ObservableObject {
     @Published var encouragement: String?
     @Published var timeRemaining: Int = 180
     @Published var uiState: SessionUIState = .idle
+    @Published var isPaused = false
 
     let duration = 180
 
@@ -40,6 +41,16 @@ class SessionViewModel: ObservableObject {
     init() {
         sessions = store.load()
         encouragement = "A few minutes of self-care can go a long way."
+    }
+
+    func togglePause() {
+        isPaused.toggle()
+
+        if isPaused {
+            recorder.pause()
+        } else {
+            recorder.resume()
+        }
     }
 
     func startSession() {
@@ -82,16 +93,12 @@ class SessionViewModel: ObservableObject {
         recorder.stopManually()
     }
 
-    func togglePause() {
-        // Optional: add pause logic
-    }
-
     func requestPermissionsAndScheduleReminder() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, _ in
             guard granted else { return }
             self.scheduleReminder()
         }
-
+        
         AVAudioSession.sharedInstance().requestRecordPermission { _ in }
     }
 

@@ -17,24 +17,20 @@ class AudioRecorder {
         recordingSubject = subject
         
         let filename = FileManager.default.temporaryDirectory.appendingPathComponent("recording.m4a")
-        let settings: [String: Any] = [
+        let settings = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
             AVSampleRateKey: 44100,
-            AVNumberOfChannelsKey: 2,
+            AVNumberOfChannelsKey: 1,
             AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
         ]
         
         do {
             let session = AVAudioSession.sharedInstance()
-            try session.setCategory(.record, mode: .default)
+            try session.setCategory(.playAndRecord, mode: .default)
             try session.setActive(true)
             
             recorder = try AVAudioRecorder(url: filename, settings: settings)
-            recorder?.record(forDuration: duration)
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + duration) {
-                self.stopManually()
-            }
+            recorder?.record()
             
         } catch {
             subject.send(completion: .failure(error))
@@ -50,5 +46,13 @@ class AudioRecorder {
             recordingSubject?.send(completion: .finished)
         }
     }
-
+    
+    func pause() {
+        recorder?.pause()
+    }
+    
+    func resume() {
+        recorder?.record()
+    }
 }
+
