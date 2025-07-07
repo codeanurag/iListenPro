@@ -21,6 +21,7 @@ class SessionViewModel: ObservableObject {
     @Published var isPaused = false
     private var useMockAI = true
     let duration = 180
+    let store = SessionStore()
 
     var canEndEarly: Bool {
         return timeRemaining < (duration - 5)
@@ -34,7 +35,6 @@ class SessionViewModel: ObservableObject {
 
     private let recorder = AudioRecorder()
     private let synthesizer = SpeechSynthesizer()
-    private let store = SessionStore()
     private var cancellables = Set<AnyCancellable>()
     private var timerCancellable: AnyCancellable?
 

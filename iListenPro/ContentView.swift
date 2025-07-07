@@ -53,9 +53,12 @@ struct ContentView: View {
                     Spacer()
                     
                     if case .idle = sessionVM.uiState {
-                        NavigationLink("Previous Conversations", destination: SessionListView(sessions: sessionVM.sessions))
-                            .foregroundColor(.blue)
-                            .padding(.bottom, 12)
+                        NavigationLink(
+                            destination: SessionListView()
+                                .environmentObject(sessionVM)
+                        ) {
+                            Text("Previous Conversations")
+                        }
                         
                         Button(action: {
                             sessionVM.startSession()
