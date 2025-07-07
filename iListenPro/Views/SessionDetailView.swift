@@ -12,26 +12,40 @@ struct SessionDetailView: View {
     let session: Session
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("You said:")
-                .font(.headline)
-            Text(session.transcript ?? "No transcription available.")
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Date: \(session.date.formatted(date: .abbreviated, time: .shortened))")
+                    .font(.headline)
 
-            Divider()
+                if let transcript = session.transcript {
+                    Text("You said:")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
 
-            Text("AI replied:")
-                .font(.headline)
-            Text(session.reply ?? "No reply generated.")
-                .padding()
-                .background(Color.blue.opacity(0.1))
-                .cornerRadius(8)
+                    Text(transcript)
+                        .font(.body)
+                        .padding()
+                        .background(Color.white.opacity(0.05))
+                        .cornerRadius(10)
+                }
 
-            Spacer()
+                if let reply = session.reply {
+                    Text("AI replied:")
+                        .font(.subheadline)
+                        .foregroundColor(.gray)
+
+                    Text(reply)
+                        .font(.body)
+                        .padding()
+                        .background(Color.blue.opacity(0.15))
+                        .cornerRadius(10)
+                }
+            }
+            .padding()
         }
-        .padding()
-        .navigationTitle(session.date.formatted(date: .abbreviated, time: .shortened))
+        .navigationTitle("Conversation")
+        .background(Color.black.ignoresSafeArea())
+        .foregroundColor(.white)
     }
 }
+

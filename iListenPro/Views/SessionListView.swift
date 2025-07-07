@@ -10,21 +10,30 @@ import SwiftUI
 
 struct SessionListView: View {
     let sessions: [Session]
-
+    
     var body: some View {
-        List(sessions) { session in
-            NavigationLink(destination: SessionDetailView(session: session)) {
-                VStack(alignment: .leading) {
-                    Text(session.date.formatted(date: .abbreviated, time: .shortened))
-                        .font(.headline)
-                    Text(session.summary)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
+        List {
+            ForEach(sessions) { session in
+                NavigationLink(destination: SessionDetailView(session: session)) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(session.date, style: .date)
+                            .font(.headline)
+                        
+                        if let transcript = session.transcript {
+                            Text(transcript.prefix(80) + "…")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        } else {
+                            Text("No transcript available")
+                                .font(.subheadline)
+                                .foregroundColor(.gray)
+                        }
+                    }
+                    .padding(.vertical, 6)
                 }
-                .padding(.vertical, 4)
             }
         }
-        .navigationTitle("Past Sessions")
+        .navigationTitle("Previous Conversations")
     }
 }
+
