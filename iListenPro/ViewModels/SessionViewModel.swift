@@ -16,11 +16,8 @@ class SessionViewModel: ObservableObject {
     @Published var sessions: [Session] = []
     @Published var currentSession: Session?
     @Published var encouragement: String?
-    @Published var overlayView: AnyView = AnyView(EmptyView())
-    @Published var isRecording = false
-    @Published var isPaused = false
     @Published var timeRemaining: Int = 180
-    @Published var isProcessingResponse = false
+    @Published var uiState: SessionUIState = .idle
 
     let duration = 180
 
@@ -38,33 +35,24 @@ class SessionViewModel: ObservableObject {
         sessions = store.load()
         encouragement = "A few minutes of self-care can go a long way."
     }
-    
-    private var openAIAPIKey: String {
-        // In production, use environment variables or secure storage
-        // For development, you can set this in your scheme's environment variables
-        return ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
-    }
 
     func startSession() {
         let session = Session(date: Date())
         currentSession = session
-        isRecording = true
-        isPaused = false
         timeRemaining = duration
-        
-        // Start countdown timer
+        uiState = .recording
+
         timerCancellable = Timer.publish(every: 1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                guard let self = self, self.isRecording, !self.isPaused else { return }
+                guard let self = self, case .recording = self.uiState else { return }
                 if self.timeRemaining > 0 {
                     self.timeRemaining -= 1
                 } else {
                     self.stopSession()
                 }
             }
-        
-        // Start audio recording and transcription/AI flow
+
         recorder.startRecording(duration: TimeInterval(duration))
             .sink(receiveCompletion: { _ in }, receiveValue: { url in
                 self.processRecording(at: url)
@@ -73,20 +61,23 @@ class SessionViewModel: ObservableObject {
     }
 
     func stopSession() {
-        isRecording = false
         timerCancellable?.cancel()
+        if case .recording = uiState {
+            uiState = .processing
+        }
         recorder.stopManually()
     }
 
     func endAndSendRecording() {
-        isRecording = false
-        isProcessingResponse = true
         timerCancellable?.cancel()
+        if case .recording = uiState {
+            uiState = .processing
+        }
         recorder.stopManually()
     }
 
     func togglePause() {
-        isPaused.toggle()
+        // Optional: add pause logic
     }
 
     func requestPermissionsAndScheduleReminder() {
@@ -110,6 +101,39 @@ class SessionViewModel: ObservableObject {
         let trigger = UNCalendarNotificationTrigger(dateMatching: dateComponents, repeats: true)
         let request = UNNotificationRequest(identifier: "dailyReminder", content: content, trigger: trigger)
         UNUserNotificationCenter.current().add(request)
+    }
+
+    private func processRecording(at url: URL) {
+        uiState = .processing
+
+        transcribe(url: url)
+            .flatMap { transcript -> AnyPublisher<String, Error> in
+                self.currentSession?.transcript = transcript
+                return Just(transcript)
+                    .delay(for: .milliseconds(200), scheduler: DispatchQueue.main)
+                    .flatMap { self.generateAIResponse(to: $0) }
+                    .eraseToAnyPublisher()
+            }
+            .receive(on: DispatchQueue.main)
+            .sink(receiveCompletion: { completion in
+                if case .failure(let error) = completion {
+                    self.uiState = .error("Something went wrong: \(error.localizedDescription)")
+                }
+            }, receiveValue: { reply in
+                self.currentSession?.reply = reply
+                if let session = self.currentSession {
+                    self.sessions.insert(session, at: 0)
+                    self.store.save(self.sessions)
+                    self.synthesizer.speak(text: reply)
+                    self.uiState = .reflecting(
+                        transcript: session.transcript ?? "",
+                        reply: reply
+                    )
+                } else {
+                    self.uiState = .error("Missing session")
+                }
+            })
+            .store(in: &cancellables)
     }
 
     private func transcribe(url: URL) -> AnyPublisher<String, Error> {
@@ -161,10 +185,8 @@ class SessionViewModel: ObservableObject {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.addValue("Bearer \(openAIAPIKey)",
-                         forHTTPHeaderField: "Authorization")
-        request.addValue("application/json",
-                         forHTTPHeaderField: "Content-Type")
+        request.addValue("Bearer YOUR_OPENAI_API_KEY", forHTTPHeaderField: "Authorization")
+        request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
 
         return URLSession.shared.dataTaskPublisher(for: request)
@@ -182,44 +204,3 @@ class SessionViewModel: ObservableObject {
     }
 }
 
-extension SessionViewModel {
-    func processRecording(at url: URL) {
-        isProcessingResponse = true
-
-        transcribe(url: url)
-            .flatMap { transcript -> AnyPublisher<String, Error> in
-                self.currentSession?.transcript = transcript
-
-                DispatchQueue.main.async {
-                    self.overlayView = AnyView(LoadingOverlay())
-                }
-
-                return Just(transcript)
-                    .delay(for: .milliseconds(300), scheduler: DispatchQueue.main)
-                    .flatMap { self.generateAIResponse(to: $0) }
-                    .eraseToAnyPublisher()
-            }
-            .receive(on: DispatchQueue.main)
-            .sink(receiveCompletion: { completion in
-                self.isProcessingResponse = false
-                if case .failure(let error) = completion {
-                    self.overlayView = AnyView(EmptyView())
-                }
-            }, receiveValue: { reply in
-                self.currentSession?.reply = reply
-                self.synthesizer.speak(text: reply)
-
-                self.overlayView = AnyView(
-                    ReflectionOverlay(
-                        transcript: self.currentSession?.transcript ?? "",
-                        reply: reply,
-                        onDismiss: {
-                            self.overlayView = AnyView(EmptyView())
-                        }
-                    )
-                )
-                self.isProcessingResponse = false
-            })
-            .store(in: &cancellables)
-    }
-}
