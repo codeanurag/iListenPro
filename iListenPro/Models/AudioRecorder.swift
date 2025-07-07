@@ -50,4 +50,5 @@ class AudioRecorder {
             recordingSubject?.send(completion: .finished)
         }
     }
+
 }
