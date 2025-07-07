@@ -11,7 +11,7 @@
 
 *Take 3 minutes daily to reflect, record, and receive empathetic AI responses*
 
-[Features](#features) • [Screenshots](#screenshots) • [Installation](#installation) • [Usage](#usage) • [Architecture](#architecture)
+[Features](#-features) • [App Flow](#-app-flow) • [Installation](#-installation) • [Usage](#-usage) • [Architecture](#️-architecture)
 
 </div>
 
@@ -64,7 +64,7 @@
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/iListenPro.git
+   git clone https://github.com/codeanurag/iListenPro.git
    cd iListenPro
    ```
 
@@ -220,7 +220,11 @@ Have questions or need help?
 
 - 🐛 **Bug Reports**: [Open an issue](https://github.com/codeanurag/iListenPro/issues)
 - 💡 **Feature Requests**: [Start a discussion](https://github.com/codeanurag/iListenPro/discussions)
+<<<<<<< HEAD
 - 📧 **Contact**: [codeanuragpandit@gmail.com](mailto:codeanuragpandit@gmail.com)
+=======
+- 📧 **Contact**: [anurag@example.com](mailto:anurag@example.com)
+>>>>>>> bb27371 ([iListenPro] Fix README navigation links and add MIT LICENSE file - 2025-07-07 12:44:18)
 
 ---
 
