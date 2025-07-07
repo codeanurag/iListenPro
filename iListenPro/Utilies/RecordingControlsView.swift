@@ -15,7 +15,7 @@ struct RecordingControlsView: View {
                 Button(action: {
                     sessionVM.togglePause()
                 }) {
-                    Text(sessionVM.isPaused ? "Resume" : "Pause")
+                    Text("Pause")
                         .frame(width: 100)
                 }
                 .buttonStyle(PrimaryButtonStyle())

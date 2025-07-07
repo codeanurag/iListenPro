@@ -24,6 +24,12 @@ class SessionViewModel: ObservableObject {
     var canEndEarly: Bool {
         return timeRemaining < (duration - 5)
     }
+    
+    private var openAIAPIKey: String {
+        // In production, use environment variables or secure storage
+        // For development, you can set this in your scheme's environment variables
+        return ProcessInfo.processInfo.environment["OPENAI_API_KEY"] ?? ""
+    }
 
     private let recorder = AudioRecorder()
     private let synthesizer = SpeechSynthesizer()
@@ -185,7 +191,7 @@ class SessionViewModel: ObservableObject {
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        request.addValue("Bearer YOUR_OPENAI_API_KEY", forHTTPHeaderField: "Authorization")
+        request.addValue("Bearer \(openAIAPIKey)", forHTTPHeaderField: "Authorization")
         request.addValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = body
 
