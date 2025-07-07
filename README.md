@@ -220,11 +220,7 @@ Have questions or need help?
 
 - 🐛 **Bug Reports**: [Open an issue](https://github.com/codeanurag/iListenPro/issues)
 - 💡 **Feature Requests**: [Start a discussion](https://github.com/codeanurag/iListenPro/discussions)
-<<<<<<< HEAD
 - 📧 **Contact**: [codeanuragpandit@gmail.com](mailto:codeanuragpandit@gmail.com)
-=======
-- 📧 **Contact**: [anurag@example.com](mailto:anurag@example.com)
->>>>>>> bb27371 ([iListenPro] Fix README navigation links and add MIT LICENSE file - 2025-07-07 12:44:18)
 
 ---
 
